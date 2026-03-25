@@ -15,10 +15,10 @@ struct SettingsView: View {
             
             Toggle("Afficher dans la barre des menus", isOn: $showMenuBarIcon)
                 .toggleStyle(.switch)
-                .onChange(of: showMenuBarIcon) { _, newValue in
-                    if newValue {
-                        (NSApp.delegate as? AppDelegate)?.setupMenuBar()
-                    } else {
+                .onChange(of: showMenuBarIcon) { newValue in
+                if newValue {
+                    (NSApp.delegate as? AppDelegate)?.setupMenuBar()
+                } else {
                         (NSApp.delegate as? AppDelegate)?.removeMenuBar()
                     }
                 }
