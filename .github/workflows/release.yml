@@ -3,7 +3,7 @@ name: Build and Release DMG
 on:
   push:
     tags:
-      - 'dmg-*'
+      - 'dgm-*'
   workflow_dispatch:
 
 jobs:
@@ -15,17 +15,20 @@ jobs:
       - name: 📥 Récupération du code
         uses: actions/checkout@v4
 
-      - name: 🔨 Compilation de l'application
+      - name: 🔨 Compilation (Apple Silicon Uniquement)
         run: |
-          echo "Compilation des fichiers Swift..."
-          swiftc *.swift -o TermNotch
+          echo "1. Compilation exclusive pour Apple Silicon (arm64)..."
+          swiftc *.swift -o TermNotch -target arm64-apple-macosx11.0
           
-          echo "Création de la structure .app..."
+          echo "2. Création de la structure .app stricte..."
           mkdir -p TermNotch.app/Contents/MacOS
           mkdir -p TermNotch.app/Contents/Resources
           mv TermNotch TermNotch.app/Contents/MacOS/
           
-          echo "Création du Info.plist..."
+          echo "3. Ajout du fichier PkgInfo (Requis par Gatekeeper)..."
+          echo -n "APPL????" > TermNotch.app/Contents/PkgInfo
+          
+          echo "4. Création du Info.plist complet..."
           cat > TermNotch.app/Contents/Info.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -41,17 +44,30 @@ jobs:
               <string>APPL</string>
               <key>CFBundleShortVersionString</key>
               <string>${{ github.ref_name }}</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <!-- Apple Silicon nécessite au minimum macOS 11.0 -->
+              <key>LSMinimumSystemVersion</key>
+              <string>11.0</string>
               <key>LSUIElement</key>
               <true/>
           </dict>
           </plist>
           EOF
+          
+          echo "5. Signature ad-hoc propre..."
+          codesign --force --deep --sign - TermNotch.app
 
-      - name: 📦 Création du fichier DMG
+      - name: 📦 Création du fichier DMG (Avec raccourci Applications)
         run: |
-          echo "Création du DMG avec hdiutil..."
-          # hdiutil est l'outil natif macOS pour créer des images disques
-          hdiutil create -volname "TermNotch" -srcfolder TermNotch.app -ov -format UDZO TermNotch.dmg
+          echo "Préparation du dossier pour le DMG..."
+          mkdir -p dmg_staging
+          mv TermNotch.app dmg_staging/
+          
+          ln -s /Applications dmg_staging/Applications
+          
+          echo "Création du DMG..."
+          hdiutil create -volname "TermNotch" -srcfolder dmg_staging -ov -format UDZO TermNotch.dmg
 
       - name: 🚀 Publication de la Release
         uses: softprops/action-gh-release@v2
