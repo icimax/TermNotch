@@ -1,4 +1,4 @@
-run 
+for development run 
 ```
 ./build.sh
 ```
