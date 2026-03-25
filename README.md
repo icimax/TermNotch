@@ -1,4 +1,4 @@
-Apple silicon support only
+## Apple silicon support only
 
 for development run 
 ```
