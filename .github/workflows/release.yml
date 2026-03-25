@@ -3,7 +3,7 @@ name: Build and Release DMG
 on:
   push:
     tags:
-      - 'dgm-*'
+      - 'dmg-*'
   workflow_dispatch:
 
 jobs:
