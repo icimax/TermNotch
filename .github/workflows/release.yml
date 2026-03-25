@@ -1,0 +1,64 @@
+name: Build and Release DMG
+
+on:
+  push:
+    tags:
+      - 'dmg-*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build TermNotch
+    runs-on: macos-latest
+
+    steps:
+      - name: 📥 Récupération du code
+        uses: actions/checkout@v4
+
+      - name: 🔨 Compilation de l'application
+        run: |
+          echo "Compilation des fichiers Swift..."
+          swiftc *.swift -o TermNotch
+          
+          echo "Création de la structure .app..."
+          mkdir -p TermNotch.app/Contents/MacOS
+          mkdir -p TermNotch.app/Contents/Resources
+          mv TermNotch TermNotch.app/Contents/MacOS/
+          
+          echo "Création du Info.plist..."
+          cat > TermNotch.app/Contents/Info.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>TermNotch</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.tonnom.TermNotch</string>
+              <key>CFBundleName</key>
+              <string>TermNotch</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>${{ github.ref_name }}</string>
+              <key>LSUIElement</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: 📦 Création du fichier DMG
+        run: |
+          echo "Création du DMG avec hdiutil..."
+          # hdiutil est l'outil natif macOS pour créer des images disques
+          hdiutil create -volname "TermNotch" -srcfolder TermNotch.app -ov -format UDZO TermNotch.dmg
+
+      - name: 🚀 Publication de la Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: TermNotch.dmg
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
