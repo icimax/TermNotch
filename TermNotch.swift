@@ -9,27 +9,21 @@ struct NotchShape: Shape {
         let r: CGFloat = 14
         let ir: CGFloat = 12 // Rayon inversé
         
-        // Haut-gauche
+        // Top-Left corner
         path.move(to: CGPoint(x: 0, y: 0))
-        // Courbe inversée haut-gauche
+        // inversed corner top-left
         path.addArc(center: CGPoint(x: 0, y: ir), radius: ir, startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
-        
-        // Ligne verticale gauche
+        // vertical line - left 
         path.addLine(to: CGPoint(x: ir, y: h - r))
-        
-        // Courbe bas-gauche
+        // inversed Bottom-Left corner 
         path.addArc(center: CGPoint(x: ir + r, y: h - r), radius: r, startAngle: .degrees(180), endAngle: .degrees(90), clockwise: true)
-        
-        // Ligne horizontale bas
+        // Bottom horizontal line
         path.addLine(to: CGPoint(x: w - ir - r, y: h))
-        
-        // Courbe bas-droite
+        // Reversed Bottom-Right corner
         path.addArc(center: CGPoint(x: w - ir - r, y: h - r), radius: r, startAngle: .degrees(90), endAngle: .degrees(0), clockwise: true)
-        
-        // Ligne verticale droite
+        // Right vertical line
         path.addLine(to: CGPoint(x: w - ir, y: ir))
-        
-        // Courbe inversée haut-droite
+        // Reversed corner top-right
         path.addArc(center: CGPoint(x: w, y: ir), radius: ir, startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
         
         path.addLine(to: CGPoint(x: 0, y: 0))
@@ -39,8 +33,8 @@ struct NotchShape: Shape {
 
 struct PillView: View {
     let message: String
-    @State private var pillWidth: CGFloat = 210 // Largeur exacte de la notch des MacBook
-    @State private var pillHeight: CGFloat = 32 // Hauteur exacte de la notch des MacBook
+    @State private var pillWidth: CGFloat = 210 // width macbook notch 
+    @State private var pillHeight: CGFloat = 32 // height macbook notch 
     @State private var contentOpacity: Double = 0.0
 
     var body: some View {
@@ -51,16 +45,16 @@ struct PillView: View {
                 .padding(.horizontal, 15)
                 .opacity(contentOpacity)
         }
-        // Le bloc s'anime en largeur et en hauteur
+
         .frame(width: pillWidth, height: pillHeight) 
         .background(
             NotchShape()
                 .fill(Color.black)
         )
-        // La vue globale (de la taille de la fenêtre) qui garde tout aligné collé en haut
+
         .frame(width: 274, height: 60, alignment: .top)
         .onAppear {
-            // Animation d'agrandissement (façon Dynamic Island)
+            // expansion animation
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 pillWidth = 274
                 pillHeight = 60
@@ -69,7 +63,7 @@ struct PillView: View {
                 contentOpacity = 1.0
             }
             
-            // Rétractation après 3 secondes  
+            // retraction animation 
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                 withAnimation(.easeOut(duration: 0.2)) {
                     contentOpacity = 0.0
@@ -79,7 +73,6 @@ struct PillView: View {
                     pillHeight = 32
                 }
                 
-                // Quitter l'app après l'animation (laisser plus de temps pour ne pas couper la fin)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                     NSApplication.shared.terminate(nil)
                 }
@@ -98,37 +91,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let args = CommandLine.arguments
         let showMenuBar = UserDefaults.standard.bool(forKey: "showMenuBarIcon")
         
-        // 0. VÉRIFIER L'OUVERTURE DES PARAMÈTRES
+        // Settings
         if args.contains("-s") || args.contains("--settings") {
             if showMenuBar { setupMenuBar() }
             openSettings()
-            return // On arrête ici, on n'affiche pas la notification
+            return 
         }
         
-        // Si lancé sans argument (ex: double-clic depuis le Finder), on lance le processus d'installation
+        // install process
         if args.count <= 1 {
             installCLIIfNeeded()
             
-            // Si on a activé l'option de rester dans la barre de menu
+            // menu bar
             if showMenuBar {
                 setupMenuBar()
-                return // On s'arrête là : on ne lance pas la notification textuelle qui se ferme toute seule
+                return
             }
-            // Sinon on affiche quand même la notification par défaut pour montrer que ça marche
         }
         
-        // 1. FORCER L'ÉCRAN PRINCIPAL
+        // Main screen only
         guard let primaryScreen = NSScreen.screens.first else { exit(0) }
         let screenRect = primaryScreen.frame
         
-        let width: CGFloat = 274 // 250 + 24 (2 * 12 pour les rayons inversés)
+        let width: CGFloat = 274 
         let height: CGFloat = 60
         
-        // 2. CALCULER LA POSITION EXACTE
+        // Position
         let x = screenRect.minX + (screenRect.width - width) / 2
         let targetY = screenRect.maxY - height
         
-        // La fenêtre est FIXE
+        // Empty window
         window = NSWindow(contentRect: NSRect(x: x, y: targetY, width: width, height: height),
                           styleMask: [.borderless],
                           backing: .buffered,
@@ -140,21 +132,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.hasShadow = false 
         window.ignoresMouseEvents = true 
         
-        let message = args.count > 1 ? args[1] : "Tâche terminée !"
+        let message = args.count > 1 ? args[1] : "Task completed!"
         
-        // 3. INTÉGRER LA VUE SWIFTUI
-        // NSHostingView masque le contenu qui déborde grâce à la Vue et la Fenêtre
         let hostingView = NSHostingView(rootView: PillView(message: message))
         window.contentView = hostingView
         window.orderFront(nil)
     }
     
-    // Fonction d'ouverture de la fenêtre des paramètres via MenuBar
+    // opening via MenuBar
     @objc func openSettingsMenu() {
         openSettings()
     }
     
-    // Fonction d'ouverture de la fenêtre des paramètres
+    // opening settings window
     func openSettings() {
         if settingsWindow == nil {
             let window = NSWindow(
@@ -164,11 +154,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 defer: false
             )
             window.center()
-            window.title = "Paramètres TermNotch"
+            window.title = "TermNotch Settings"
             window.contentView = NSHostingView(rootView: SettingsView())
             window.isReleasedWhenClosed = false
             
-            // Fermer l'application quand la fenêtre des paramètres se ferme (uniquement si le mode menubar est désactivé)
+            // closing app
             NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: nil) { _ in
                 if !UserDefaults.standard.bool(forKey: "showMenuBarIcon") {
                     NSApplication.shared.terminate(nil)
@@ -182,12 +172,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
     
-    // Gestion du menu en haut de l'écran (Status Item)
+    // Status Item
     func setupMenuBar() {
         if statusItem == nil {
             statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             if let button = statusItem?.button {
-                // Utilise une icône de terminal par défaut de SF Symbols (si disponible sur l'OS)
                 if let image = NSImage(systemSymbolName: "terminal", accessibilityDescription: "TermNotch") {
                     button.image = image
                 } else {
@@ -195,9 +184,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
             let menu = NSMenu()
-            menu.addItem(NSMenuItem(title: "Paramètres...", action: #selector(openSettingsMenu), keyEquivalent: ","))
+            menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettingsMenu), keyEquivalent: ","))
             menu.addItem(NSMenuItem.separator())
-            menu.addItem(NSMenuItem(title: "Quitter TermNotch", action: #selector(quitApp), keyEquivalent: "q"))
+            menu.addItem(NSMenuItem(title: "Quit TermNotch", action: #selector(quitApp), keyEquivalent: "q"))
             statusItem?.menu = menu
         }
     }
@@ -213,35 +202,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.terminate(nil)
     }
     
-    // Fonction d'installation automatique dans /usr/local/bin
+    // auto install in /usr/local/bin
     func installCLIIfNeeded() {
         let destPath = "/usr/local/bin/termnotch"
         let fm = FileManager.default
         
-        // On récupère le chemin de l'exécutable (à l'intérieur de l'App)
         let exePath = Bundle.main.executablePath ?? ProcessInfo.processInfo.arguments[0]
         
-        // Si le lien existe déjà et pointe vers le bon endroit, on ne fait rien
         if fm.fileExists(atPath: destPath) {
             do {
                 let currentTarget = try fm.destinationOfSymbolicLink(atPath: destPath)
-                if currentTarget == exePath { return } // Déjà installé et à jour
+                if currentTarget == exePath { return } // Already installed and up to date
             } catch {
-                // Pas un symlink ou erreur, on continue pour l'écraser
             }
         }
         
-        // Création d'une alerte native MacOS
+        // native alert
         let alert = NSAlert()
-        alert.messageText = "Installer la commande TermNotch ?"
-        alert.informativeText = "Pour utiliser TermNotch directement depuis votre terminal, l'application doit créer un raccourci dans /usr/local/bin.\n\nVotre mot de passe vous sera demandé."
-        alert.addButton(withTitle: "Installer")
-        alert.addButton(withTitle: "Plus tard")
+        alert.messageText = "Install TermNotch CLI?"
+        alert.informativeText = "To use TermNotch directly from your terminal, the application must create a shortcut in /usr/local/bin.\n\nYour password will be requested."
+        alert.addButton(withTitle: "Install")
+        alert.addButton(withTitle: "Later")
         
         NSApp.activate(ignoringOtherApps: true)
         
         if alert.runModal() == .alertFirstButtonReturn {
-            // Utilisation d'AppleScript pour exécuter une commande bash avec privilèges administrateur
+            // AppleScript used to execute a bash command with administrator privileges
             let script = "do shell script \"mkdir -p /usr/local/bin && ln -sf '\(exePath)' '\(destPath)'\" with administrator privileges"
             
             var error: NSDictionary?
@@ -251,8 +237,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             if error == nil {
                 let successAlert = NSAlert()
-                successAlert.messageText = "Installation réussie !"
-                successAlert.informativeText = "Vous pouvez maintenant ouvrir votre terminal et taper : termnotch \"Votre message\""
+                successAlert.messageText = "Install successful!"
+                successAlert.informativeText = "You can now open your terminal and type: termnotch \"Your message\""
                 successAlert.runModal()
             }
         }

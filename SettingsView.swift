@@ -9,11 +9,11 @@ struct SettingsView: View {
                 .font(.system(size: 50))
                 .foregroundColor(.gray)
             
-            Text("Paramètres TermNotch")
+            Text("Settings")
                 .font(.title)
                 .fontWeight(.bold)
             
-            Toggle("Afficher dans la barre des menus", isOn: $showMenuBarIcon)
+            Toggle("show in the menu bar", isOn: $showMenuBarIcon)
                 .toggleStyle(.switch)
                 .onChange(of: showMenuBarIcon) { newValue in
                 if newValue {
@@ -23,13 +23,13 @@ struct SettingsView: View {
                     }
                 }
             
-            Text("Si activé, l'application restera ouverte en arrière-plan\net le menu restera accessible à tout moment.")
+            Text("If enabled, the application will remain open in the background\nand the menu will be accessible at all times.")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             
-            Button("Fermer") {
-                NSApp.keyWindow?.close() // Ferme uniquement la fenêtre
+            Button("Close") {
+                NSApp.keyWindow?.close()
             }
             .padding(.top, 10)
         }

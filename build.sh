@@ -1,24 +1,24 @@
 #!/bin/bash
 
-echo "🔨 Compilation de TermNotch..."
+echo "🔨 Compilation..."
 
-# 1. Compilation des fichiers Swift
+# 1. Compilation
 swiftc *.swift -o TermNotch
 
-# Vérifier si la compilation a réussi
+# check compilation
 if [ $? -ne 0 ]; then
-    echo "❌ Erreur de compilation."
+    echo "❌ error during compilation."
     exit 1
 fi
 
-# 2. Création de la structure de l'application
+# 2. Création of the structure 
 mkdir -p TermNotch.app/Contents/MacOS
 mkdir -p TermNotch.app/Contents/Resources
 
-# 3. Déplacement de l'exécutable
+# 3. moving the executable
 mv TermNotch TermNotch.app/Contents/MacOS/
 
-# 4. Création du fichier Info.plist
+# 4. info.plist creation
 cat > TermNotch.app/Contents/Info.plist <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -40,25 +40,22 @@ cat > TermNotch.app/Contents/Info.plist <<EOF
 </plist>
 EOF
 
-# 5. Installation dans le dossier Applications
+# 5. Installation 
 rm -rf ~/Applications/TermNotch.app
 mv TermNotch.app ~/Applications/
 
-# 6. Création du lien symbolique dans le dossier utilisateur local pour accès direct
-echo "🔗 Création du lien symbolique pour la commande 'termnotch'..."
-# On utilise ~/bin s'il existe ou ~/.local/bin qui ne nécessitent pas de sudo,
-# ou on crée le dossier s'il n'existe pas et on l'ajoute provisoirement aux indications
+# 6. creating the link for the command
+echo "🔗 Creating symbolic link for the 'termnotch' command..."
+
 mkdir -p ~/.local/bin
 ln -sf ~/Applications/TermNotch.app/Contents/MacOS/TermNotch ~/.local/bin/termnotch
 
-# On demande aussi l'autorisation sudo pour l'installer globalement si désiré,
-# mais ce n'est pas bloquant si l'utilisateur annule.
-echo "⚠️ Pour que la commande soit disponible partout immédiatement,"
-echo "nous essayons de l'ajouter à /usr/local/bin (peut nécessiter votre mot de passe) :"
+echo "⚠️ For the command to be available everywhere immediately,"
+echo "we are trying to add it to /usr/local/bin (may require your password) :"
 sudo ln -sf ~/Applications/TermNotch.app/Contents/MacOS/TermNotch /usr/local/bin/termnotch || true
 
-echo "✅ TermNotch mis à jour avec succès !"
+echo "✅ TermNotch was updated successfully!"
 
-# 7. Lancement d'un test automatique
-echo "🚀 Lancement du test..."
-open -a ~/Applications/TermNotch.app --args "Test d'affichage !"
+# 7. Starting test
+echo "🚀 Starting test..."
+open -a ~/Applications/TermNotch.app --args "Display test!"
